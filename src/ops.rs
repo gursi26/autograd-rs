@@ -1,4 +1,7 @@
-pub enum ElementaryOp {
-    Add, Negate, Reciprocal, Multiply,
-    Exp, Pow, Log
+pub enum BinaryOp {
+    Add, Multiply, Pow
+}
+
+pub enum UnaryOp {
+    Negate, Reciprocal, Exp, Log
 }
