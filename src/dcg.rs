@@ -1,32 +1,47 @@
-use crate::ops::{UnaryOp, BinaryOp};
-use crate::compute;
-use crate::tensor;
+use crate::tensor::Value;
+use std::collections::HashMap;
 
+#[derive(Eq, PartialEq, Hash)]
+enum BinaryOp {
+    Add, Multiply, Pow
+}
 
-pub enum DCGNode {
-    TensorNode(Vec<f64>),
-    UnaryNode {
-        op: UnaryOp,
-        value: Box<DCGNode>
+#[derive(Eq, PartialEq, Hash)]
+enum UnaryOp {
+    Negate, Exp, Log, Reciprocal
+}
+
+#[derive(Eq, PartialEq, Hash)]
+enum DCGNode<'a> {
+    TensorNode {
+        value: Box<Value>,
+        source: &'a mut Value
     },
-    BinaryNode {
+    BinaryOpNode {
         op: BinaryOp,
-        lhs: Box<DCGNode>,
-        rhs: Box<DCGNode>
+        rhs: Box<DCGNode<'a>>,
+        lhs: Box<DCGNode<'a>>,
+        grad_dict: HashMap<&'a Box<DCGNode<'a>>, f64>
+    },
+    UnaryOpNode {
+        op: UnaryOp,
+        value: Box<DCGNode<'a>>,
+        grad_dict: HashMap<&'a Box<DCGNode<'a>>, f64>
     }
 }
 
-
-impl DCGNode {
-    pub fn eval(self) -> Vec<f64> {
+impl<'a> DCGNode<'a> {
+    pub fn evaluate(&self) -> HashMap<&'a Box<DCGNode<'a>>, f64> {
         match self {
-            DCGNode::TensorNode(v) => v,
-            DCGNode::UnaryNode { op, value } => {
-                compute::compute_unary(op, value.eval())
-            }
-            DCGNode::BinaryNode { op, lhs, rhs } => {
-                compute::compute_binary(op, lhs.eval(), rhs.eval())
+            Self::TensorNode { value, source } => {
+                let mut grad_dict: HashMap<&'a Box<DCGNode<'a>>, f64> = HashMap::new(); 
+                if value.requires_grad {
+                    grad_dict.insert(Self, 1.0);
+                }
+                grad_dict
             }
         }
+
+
     }
 }
