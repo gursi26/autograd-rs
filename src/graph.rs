@@ -61,8 +61,8 @@ impl<'a> Node<'a> {
             },
             Node::BinaryOpNode { rhs, lhs, op } => {
                 let (mut rhs_grad_ptrs, mut rhs_grad_values, rhs_tensor) = rhs.eval();
-                let (mut lhs_grad_ptrs, mut lhs_grad_values, lhs_tensor) = lhs.eval();
-                // Computing output and grad_values
+                let (lhs_grad_ptrs, mut lhs_grad_values, lhs_tensor) = lhs.eval();
+
                 match op {
                     BinaryOp::Add => {
 
@@ -83,23 +83,10 @@ impl<'a> Node<'a> {
                     }
                 }
 
-                // Merging grad_ptrs and grad_values from rhs and lhs
-                let mut to_remove_idxs: Vec<usize> = Vec::new();
-                for (i, (lhs_ptr, lhs_grad)) in lhs_grad_ptrs.iter().zip(&lhs_grad_values).enumerate() {
-                    if rhs_grad_ptrs.contains(&lhs_ptr) {
-                        for (rhs_grad_value, lhs_grad_value) in rhs_grad_values[i].iter_mut().zip(lhs_grad) {
-                            *rhs_grad_value += *lhs_grad_value;
-                        }
-                    } else {
-                        to_remove_idxs.push(i);
-                    }
-                }
-                for idx in to_remove_idxs.iter() {
-                    let removed_ptr = lhs_grad_ptrs.remove(*idx);
-                    let removed_grad = lhs_grad_values.remove(*idx);
-                    rhs_grad_ptrs.push(removed_ptr);
-                    rhs_grad_values.push(removed_grad);
-                }
+                compute_merged_grads(
+                    &mut rhs_grad_ptrs, lhs_grad_ptrs,
+                    &mut rhs_grad_values, lhs_grad_values
+                );
                 return (rhs_grad_ptrs, rhs_grad_values, rhs_tensor);
             }
         }
