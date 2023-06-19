@@ -24,9 +24,9 @@ class TensorNode:
         return (self.data, {})
 
 
-class UnaryDCGNode:
+class UnaryOpNode:
 
-    def __init__(self, data: TensorNode | UnaryDCGNode | BinaryDCGNode, op: str) -> None:
+    def __init__(self, data: TensorNode | UnaryOpNode | BinaryOpNode, op: str) -> None:
         self.data = data
         self.op = op
 
@@ -56,12 +56,12 @@ class UnaryDCGNode:
         return evaluated, grad_dict
 
 
-class BinaryDCGNode:
+class BinaryOpNode:
 
     def __init__(
             self, op: str, 
-            rhs: TensorNode | UnaryDCGNode | BinaryDCGNode,
-            lhs: TensorNode | UnaryDCGNode | BinaryDCGNode
+            rhs: TensorNode | UnaryOpNode | BinaryOpNode,
+            lhs: TensorNode | UnaryOpNode | BinaryOpNode
             ) -> None:
         self.lhs = lhs
         self.rhs = rhs
@@ -71,27 +71,27 @@ class BinaryDCGNode:
         evaluated_rhs, rhs_grad_dict = self.rhs.evaluate()
         evaluated_lhs, lhs_grad_dict = self.lhs.evaluate()
         if self.op == "+":
-            out = Tensor(evaluated_rhs.data + evaluated_lhs.data)
+            evaluated_lhs.data += evaluated_rhs.data
 
         elif self.op == "*":
-            out = Tensor(evaluated_rhs.data * evaluated_lhs.data)
             for key in rhs_grad_dict:
                 rhs_grad_dict[key] *= evaluated_lhs.data
             for key in lhs_grad_dict:
                 lhs_grad_dict[key] *= evaluated_rhs.data
+            evaluated_lhs.data *= evaluated_rhs.data
 
         elif self.op == "pow":
-            out = Tensor(evaluated_lhs.data ** evaluated_rhs.data)
             for key in rhs_grad_dict:
                 rhs_grad_dict[key] *= (np.log(evaluated_lhs.data) * (evaluated_lhs.data ** evaluated_rhs.data))
             for key in lhs_grad_dict:
                 lhs_grad_dict[key] *= (evaluated_rhs.data * (evaluated_lhs.data ** (evaluated_rhs.data - 1.0)))
+            evaluated_lhs.data **= evaluated_rhs.data
 
         else:
             raise ValueError(f"Invalid operator {self.op}")
 
         out_dict = merge_grad_dict(rhs_grad_dict, lhs_grad_dict)
-        return (out, out_dict)
+        return (evaluated_lhs, out_dict)
 
 
 def merge_grad_dict(gd1: dict[Tensor, np.ndarray], gd2: dict[Tensor, np.ndarray]) -> dict[Tensor, np.ndarray]:
@@ -105,8 +105,8 @@ def merge_grad_dict(gd1: dict[Tensor, np.ndarray], gd2: dict[Tensor, np.ndarray]
 
 
 def convert(
-    value : list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode
-    ) -> TensorNode | UnaryDCGNode | BinaryDCGNode:
+    value : list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode
+    ) -> TensorNode | UnaryOpNode | BinaryOpNode:
     if isinstance(value, list):
         value = np.array(value)
     if isinstance(value, np.ndarray):
@@ -117,18 +117,18 @@ def convert(
 
 
 def sum(
-    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> UnaryDCGNode:
-    return UnaryDCGNode(
+    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> UnaryOpNode:
+    return UnaryOpNode(
         op = "sum",
         data = convert(value),
     )
 
 def add(
-    rhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-    lhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> BinaryDCGNode:
-    return BinaryDCGNode(
+    rhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+    lhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> BinaryOpNode:
+    return BinaryOpNode(
         op = "+",
         rhs = convert(rhs),
         lhs = convert(lhs)
@@ -136,10 +136,10 @@ def add(
 
 
 def mul(
-    rhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-    lhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> BinaryDCGNode:
-    return BinaryDCGNode(
+    rhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+    lhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> BinaryOpNode:
+    return BinaryOpNode(
         op = "*",
         rhs = convert(rhs),
         lhs = convert(lhs)
@@ -147,10 +147,10 @@ def mul(
 
 
 def pow(
-    lhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-    rhs: int | float | list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> BinaryDCGNode:
-    return BinaryDCGNode(
+    lhs: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+    rhs: int | float | list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> BinaryOpNode:
+    return BinaryOpNode(
         op = "pow",
         rhs = convert(rhs),
         lhs = convert(lhs)
@@ -158,27 +158,27 @@ def pow(
 
 
 def neg(
-    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> UnaryDCGNode:
-    return UnaryDCGNode(
+    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> UnaryOpNode:
+    return UnaryOpNode(
         op = "-",
         data = convert(value),
     )
 
 
 def exp(
-    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> UnaryDCGNode:
-    return UnaryDCGNode(
+    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> UnaryOpNode:
+    return UnaryOpNode(
         op = "exp",
         data = convert(value),
     )
 
 
 def reciprocal(
-    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryDCGNode | BinaryDCGNode,
-) -> UnaryDCGNode:
-    return UnaryDCGNode(
+    value: list[float | int] | np.ndarray | Tensor | TensorNode | UnaryOpNode | BinaryOpNode,
+) -> UnaryOpNode:
+    return UnaryOpNode(
         op = "reciprocal",
         data = convert(value),
     )
