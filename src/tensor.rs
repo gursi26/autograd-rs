@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Tensor {
     pub data: Vec<f64>,
     pub length: usize,

@@ -18,3 +18,9 @@ pub fn compute_reciprocal(tensor: &mut Tensor) {
     }
 }
 
+pub fn compute_multiply(to_mutate: &mut Tensor, other_tensor: &Tensor) {
+    for (x, y) in to_mutate.data.iter_mut().zip(&other_tensor.data) {
+        *x *= y;
+    }
+}
+
