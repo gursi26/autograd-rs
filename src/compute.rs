@@ -43,6 +43,10 @@ pub fn compute_reciprocal_grad(tensor: &Tensor, grad_values: &mut Vec<Vec<f64>>)
 }
 
 pub fn compute_multiply(to_mutate: &mut Tensor, other_tensor: &Tensor) {
+    assert_eq!(
+        to_mutate.data.len(), other_tensor.data.len(),
+        "Attempted to multiply Tensors with unequal length."
+    );
     for (x, y) in to_mutate.data.iter_mut().zip(&other_tensor.data) {
         *x *= y;
     }
@@ -65,12 +69,20 @@ pub fn compute_multiply_grad(
 }
 
 pub fn compute_add(to_mutate: &mut Tensor, other_tensor: &Tensor) {
+    assert_eq!(
+        to_mutate.data.len(), other_tensor.data.len(),
+        "Attempted to add Tensors with unequal length."
+    );
     for (x, y) in to_mutate.data.iter_mut().zip(&other_tensor.data) {
         *x += y;
     }
 }
 
 pub fn compute_pow(to_mutate: &mut Tensor, other_tensor: &Tensor) {
+    assert_eq!(
+        to_mutate.data.len(), other_tensor.data.len(),
+        "Attempted to pow Tensors with unequal length."
+    );
     for (x, y) in to_mutate.data.iter_mut().zip(&other_tensor.data) {
         *x = x.powf(*y);
     }

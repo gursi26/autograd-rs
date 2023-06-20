@@ -1,3 +1,6 @@
+use rand::prelude::*;
+use rand_distr::StandardNormal;
+
 #[derive(Debug, PartialEq)]
 pub struct Tensor {
     pub data: Vec<f64>,
@@ -50,6 +53,14 @@ impl Tensor {
 
     pub fn parameter(data: Vec<f64>) -> Tensor {
         Tensor {length: data.len(), data, requires_grad: true, ..Default::default()}
+    }
+
+    pub fn rand(n: usize) -> Tensor {
+        let mut v = Vec::new();
+        for _ in 0..n {
+            v.push(thread_rng().sample::<f64,_>(StandardNormal));
+        }
+        Tensor::from_vec(v)
     }
 }
 
