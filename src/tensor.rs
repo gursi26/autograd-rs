@@ -47,7 +47,12 @@ impl Tensor {
     pub fn from_vec(data: Vec<f64>) -> Tensor {
         Tensor {length: data.len(), data, ..Default::default()}
     }
+
+    pub fn parameter(data: Vec<f64>) -> Tensor {
+        Tensor {length: data.len(), data, requires_grad: true, ..Default::default()}
+    }
 }
+
 
 #[macro_export]
 macro_rules! tensor {
@@ -55,5 +60,14 @@ macro_rules! tensor {
         let mut vector = Vec::new();
         $(vector.push($x as f64);)*
         tensor::Tensor::from_vec(vector)
+    }}
+}
+
+#[macro_export]
+macro_rules! parameter {
+    ($($x: expr),*) => {{
+        let mut vector = Vec::new();
+        $(vector.push($x as f64);)*
+        tensor::Tensor::parameter(vector)
     }}
 }
