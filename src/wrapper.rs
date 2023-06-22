@@ -1,6 +1,7 @@
 use crate::tensor::Tensor;
 use crate::graph::Node;
 use crate::ops::{BinaryOp, UnaryOp};
+use crate::tensor;
 
 pub trait Operable<'a> {
     fn make_operable(self) -> Node<'a>;
@@ -14,7 +15,19 @@ impl<'a> Operable<'a> for Node<'a> {
 
 impl <'a> Operable<'a> for &'a mut Tensor {
     fn make_operable(self: &'a mut Tensor) -> Node<'a> {
-        Node::TensorNode { tensor: self.clone(), source: self }
+        Node::TensorNode { tensor: self.clone(), source: Some(self) }
+    }
+}
+
+impl <'a> Operable<'a> for f64 {
+    fn make_operable(self) -> Node<'a> {
+        Node::TensorNode { tensor: tensor![self], source: None }
+    }
+}
+
+impl <'a> Operable<'a> for i32 {
+    fn make_operable(self) -> Node<'a> {
+        Node::TensorNode { tensor: tensor![self], source: None }
     }
 }
 

@@ -49,10 +49,12 @@ pub fn compute_sum(tensor: &mut Tensor) {
     tensor.length = 1;
 }
 
-pub fn compute_sum_grad(grad_values: &mut Vec<Vec<f64>>) {
-    for tensor in grad_values.iter_mut() {
-        while tensor.len() > 1 {
-            tensor[0] += tensor.pop().unwrap();
+pub fn compute_sum_grad(grad_ptrs: &Vec<&mut Tensor>, grad_values: &mut Vec<Vec<f64>>) {
+    for (tensor, tensor_ptr) in grad_values.iter_mut().zip(grad_ptrs) {
+        if tensor_ptr.length == 1 {
+            while tensor.len() > 1 {
+                tensor[0] += tensor.pop().unwrap();
+            }
         }
     }
 }
@@ -166,8 +168,14 @@ pub fn compute_equalized_length(
         to_mutate.data.push(to_mutate.data[0]);
     }
     for grad_vec in to_mutate_grad.iter_mut() {
-        while grad_vec.len() < other_tensor.length {
-            grad_vec.push(grad_vec[0]);
+        if grad_vec.len() == 1 {
+            while grad_vec.len() < other_tensor.length {
+                grad_vec.push(grad_vec[0]);
+            }
+        } else {
+            for g in grad_vec.iter_mut() {
+                *g *= other_tensor.length as f64;
+            }
         }
     }
 

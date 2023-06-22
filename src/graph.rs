@@ -6,7 +6,7 @@ use crate::compute::*;
 pub enum Node<'a> {
     TensorNode {
         tensor: Tensor,
-        source: &'a mut Tensor,
+        source: Option<&'a mut Tensor>,
     },
     UnaryOpNode {
         value: Box<Node<'a>>,
@@ -24,11 +24,12 @@ impl<'a> Node<'a> {
     pub fn eval(&mut self) -> (Vec<&mut Tensor>, Vec<Vec<f64>>, &mut Tensor) {
         match self {
             Node::TensorNode { tensor, source } => {
-                if source.requires_grad {
-                    return (vec![*source], vec![vec![1.0; tensor.length]], tensor);
-                } else {
-                    return (Vec::new(), Vec::new(), tensor);
+                if let Some(s) = source {
+                    if s.requires_grad {
+                        return (vec![*s], vec![vec![1.0; tensor.length]], tensor);
+                    }
                 }
+                return (Vec::new(), Vec::new(), tensor);
             },
             Node::UnaryOpNode { value, op } => {
                 let (grad_ptrs, mut grad_values, tensor) = value.eval();
@@ -46,7 +47,7 @@ impl<'a> Node<'a> {
                         compute_reciprocal(tensor);
                     },
                     UnaryOp::Sum => {
-                        compute_sum_grad(&mut grad_values);
+                        compute_sum_grad(&grad_ptrs, &mut grad_values);
                         compute_sum(tensor)
                     }
                 };
