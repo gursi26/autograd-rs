@@ -44,6 +44,10 @@ impl<'a> Node<'a> {
                     UnaryOp::Reciprocal => {
                         compute_reciprocal_grad(&*tensor, &mut grad_values);
                         compute_reciprocal(tensor);
+                    },
+                    UnaryOp::Sum => {
+                        compute_sum_grad(&mut grad_values);
+                        compute_sum(tensor)
                     }
                 };
                 return (grad_ptrs, grad_values, tensor);
@@ -51,6 +55,8 @@ impl<'a> Node<'a> {
             Node::BinaryOpNode { rhs, lhs, op } => {
                 let (rhs_grad_ptrs, mut rhs_grad_values, rhs_tensor) = rhs.eval();
                 let (mut lhs_grad_ptrs, mut lhs_grad_values, lhs_tensor) = lhs.eval();
+
+                compute_equalized_length(rhs_tensor, lhs_tensor, &mut rhs_grad_values, &mut lhs_grad_values);
 
                 match op {
                     BinaryOp::Add => {

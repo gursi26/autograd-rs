@@ -42,6 +42,21 @@ pub fn compute_reciprocal_grad(tensor: &Tensor, grad_values: &mut Vec<Vec<f64>>)
     }
 }
 
+pub fn compute_sum(tensor: &mut Tensor) {
+    while tensor.data.len() > 1 {
+        tensor.data[0] += tensor.data.pop().unwrap();
+    }
+    tensor.length = 1;
+}
+
+pub fn compute_sum_grad(grad_values: &mut Vec<Vec<f64>>) {
+    for tensor in grad_values.iter_mut() {
+        while tensor.len() > 1 {
+            tensor[0] += tensor.pop().unwrap();
+        }
+    }
+}
+
 pub fn compute_multiply(to_mutate: &mut Tensor, other_tensor: &Tensor) {
     assert_eq!(
         to_mutate.data.len(), other_tensor.data.len(),
@@ -126,3 +141,35 @@ pub fn compute_merged_grads<'a>(
     }
 }
 
+pub fn compute_equalized_length(
+    t1: &mut Tensor,
+    t2: &mut Tensor,
+    t1_grads: &mut Vec<Vec<f64>>,
+    t2_grads: &mut Vec<Vec<f64>>
+) {
+    let to_mutate: &mut Tensor;
+    let to_mutate_grad: &mut Vec<Vec<f64>>;
+    let other_tensor: &mut Tensor;
+    if t1.length == 1 && t2.length > 1 {
+        to_mutate = t1;
+        to_mutate_grad = t1_grads;
+        other_tensor = t2;
+    } else if t2.length == 1 && t1.length > 1 {
+        to_mutate = t2;
+        to_mutate_grad = t2_grads;
+        other_tensor = t1;
+    } else {
+        return;
+    }
+
+    while to_mutate.data.len() < other_tensor.length {
+        to_mutate.data.push(to_mutate.data[0]);
+    }
+    for grad_vec in to_mutate_grad.iter_mut() {
+        while grad_vec.len() < other_tensor.length {
+            grad_vec.push(grad_vec[0]);
+        }
+    }
+
+    to_mutate.length = to_mutate.data.len();
+}

@@ -88,3 +88,11 @@ pub fn reciprocal<'a, T: Operable<'a>>(value: T) -> Node<'a> {
         op: UnaryOp::Reciprocal
     }
 }
+
+pub fn sum<'a, T: Operable<'a>>(value: T) -> Node<'a> {
+    let value = value.make_operable();
+    Node::UnaryOpNode {
+        value: Box::new(value),
+        op: UnaryOp::Sum
+    }
+}

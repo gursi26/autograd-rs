@@ -1,12 +1,14 @@
 use rand::prelude::*;
 use rand_distr::StandardNormal;
+use uuid::Uuid;
 
 #[derive(Debug, PartialEq)]
 pub struct Tensor {
     pub data: Vec<f64>,
     pub length: usize,
     pub grad: Option<Vec<f64>>,
-    pub requires_grad: bool
+    pub requires_grad: bool,
+    uuid: Uuid
 }
 
 impl Default for Tensor {
@@ -15,7 +17,8 @@ impl Default for Tensor {
             data: Vec::new(),
             length: 0,
             grad: None,
-            requires_grad: false
+            requires_grad: false,
+            uuid: Uuid::new_v4()
         }
     }
 }
@@ -26,7 +29,8 @@ impl Clone for Tensor {
             data: self.data.clone(),
             length: self.length,
             grad: self.grad.clone(),
-            requires_grad: self.requires_grad
+            requires_grad: self.requires_grad,
+            uuid: self.uuid
         }
     }
 }
