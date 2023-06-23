@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub enum UnaryOp {
-    Negate, Exp, Reciprocal, Sum
+    Negate, Exp, Reciprocal
 }
 
 #[derive(Debug)]
