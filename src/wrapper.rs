@@ -3,10 +3,12 @@ use crate::graph::Node;
 use crate::ops::{BinaryOp, UnaryOp};
 use crate::variable;
 
+// Operable trait for wrapper functions
 pub trait Operable<'a> {
     fn make_operable(self) -> Node<'a>;
 }
 
+// Implementations
 impl<'a> Operable<'a> for Node<'a> {
     fn make_operable(self) -> Node<'a> {
         self
@@ -36,6 +38,7 @@ impl <'a> Operable<'a> for i32 {
         Node::VariableNode { value: variable::var!(self), source: None }
     }
 }
+
 
 pub fn eval<'a>(mut root_node: Node<'a>) -> Variable {
     let (mut grad_ptrs, mut grad_values, output_value) = root_node.eval();

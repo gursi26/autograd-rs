@@ -7,20 +7,21 @@ mod graph;
 mod ops;
 mod compute;
 mod wrapper;
+mod tensor;
 
 use variable::Variable;
+use tensor::VariableTensor;
 use wrapper::*;
 
 fn main() {
-    let mut w = parameter!(1);
-    let mut b = parameter!(4);
-    let xval = var![70];
-    let yval = var![421];
-
-    let yhat = add(mul(&mut w, &xval), &mut b);
-    let loss = eval(pow(add(yhat, negate(&yval)), 2));
-
-    println!("Loss : {}", loss);
-    println!("Weight : {:?}", w);
-    println!("Bias : {:?}", b);
+    let mut a = VariableTensor{ values: vec![parameter!(1), parameter!(2), parameter!(3)]};
+    let mut b = VariableTensor{ values: vec![parameter!(4), parameter!(5), parameter!(6)]};
+    let mut add_node = &mut a * &mut b;
+    let mut output_values = Vec::new();
+    for val in add_node.values.drain(..) {
+        output_values.push(eval(val));
+    }
+    println!("{:?}", output_values);
+    println!("{:?}", a);
+    println!("{:?}", b);
 }

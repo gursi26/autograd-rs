@@ -2,6 +2,7 @@ use crate::variable::Variable;
 use crate::ops::{UnaryOp, BinaryOp};
 use crate::compute::*;
 
+#[derive(Debug)]
 pub enum Node<'a> {
     VariableNode {
         value: Variable,
