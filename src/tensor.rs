@@ -1,9 +1,11 @@
-use crate::wrapper::*;
+use crate::variable_wrapper::*;
 use crate::variable::Variable;
 use std::ops::{Add, Mul};
 use crate::graph::Node;
+use std::fmt;
+use rayon::prelude::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct VariableTensor {
     pub values: Vec<Variable>
 }
@@ -13,44 +15,78 @@ pub struct NodeTensor<'a> {
     pub values: Vec<Node<'a>>
 }
 
-pub trait OperableTensor<'a> {
-    fn make_operable(self) -> NodeTensor<'a>;
-}
-
-impl <'a> OperableTensor<'a> for &'a VariableTensor {
-    fn make_operable(self) -> NodeTensor<'a> {
-        let mut new_tensor = NodeTensor{values: Vec::new()};
-        for value in self.values.iter() {
-            new_tensor.values.push(value.make_operable());
+impl VariableTensor {
+    pub fn new(values: Vec<f64>, requires_grad: bool) -> VariableTensor {
+        if requires_grad {
+            return VariableTensor { values: values.iter().map(|x| Variable::parameter(*x)).collect() };
         }
-        new_tensor
+        VariableTensor { values: values.iter().map(|x| Variable::new(*x)).collect() }
     }
 }
 
-impl <'a> OperableTensor<'a> for NodeTensor<'a> {
-    fn make_operable(self) -> NodeTensor<'a> {
-        self
-    }
-}
-
-impl <'a> Add for &'a mut VariableTensor {
-    type Output = NodeTensor<'a>;
-    fn add(self, rhs: Self) -> Self::Output {
-        let mut lhs = NodeTensor { values: Vec::new() };
-        for (lhs_x, rhs_x) in self.values.iter_mut().zip(&mut rhs.values) {
-            lhs.values.push(add(lhs_x, rhs_x));
+impl fmt::Display for VariableTensor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{[")?;
+        for i in 0..(self.values.len() - 1) {
+            write!(f, "{}, ", self.values[i].value)?;
         }
-        lhs
+        write!(f, "{}], requires_grad = {}}}", self.values.last().unwrap().value, self.values[0].requires_grad)?;
+        Ok(())
     }
 }
 
-impl <'a> Mul for &'a mut VariableTensor {
-    type Output = NodeTensor<'a>;
-    fn mul(self, rhs: Self) -> Self::Output {
-        let mut lhs = NodeTensor { values: Vec::new() };
-        for (lhs_x, rhs_x) in self.values.iter_mut().zip(&mut rhs.values) {
-            lhs.values.push(mul(lhs_x, rhs_x));
+impl fmt::Debug for VariableTensor {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{{[")?;
+        for i in 0..(self.values.len() - 1) {
+            write!(f, "{}, ", self.values[i].value)?;
         }
-        lhs
+        write!(f, "{}], grads = [", self.values.last().unwrap().value)?;
+        for i in 0..(self.values.len() - 1) {
+            match self.values[i].grad {
+                Some(g) => write!(f, "{}, ", g),
+                None => write!(f, "None, ")
+            }?;
+        }
+        match self.values.last().unwrap().grad {
+            Some(g) => write!(f, "{}], requires_grad = {}}}", g, self.values[0].requires_grad),
+            None => write!(f, "None], requires_grad = {}}}", self.values[0].requires_grad)
+        }?;
+        Ok(())
     }
 }
+
+impl <'a> NodeTensor<'a> {
+    pub fn eval(self) -> VariableTensor {
+        VariableTensor {
+            values: self.values.into_par_iter().map(|x| eval(x)).collect()
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! tensor {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(
+                temp_vec.push($x as f64);
+            )*
+            VariableTensor::new(temp_vec, false)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! parameter_tensor {
+    ( $( $x:expr ),* ) => {
+        {
+            let mut temp_vec = Vec::new();
+            $(
+                temp_vec.push($x as f64);
+            )*
+            VariableTensor::new(temp_vec, true)
+        }
+    };
+}
+

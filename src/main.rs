@@ -6,22 +6,27 @@ mod variable;
 mod graph;
 mod ops;
 mod compute;
-mod wrapper;
+mod variable_wrapper;
 mod tensor;
+mod tensor_wrapper;
 
 use variable::Variable;
-use tensor::VariableTensor;
-use wrapper::*;
+use tensor::*;
+use variable_wrapper::*;
+use rayon;
 
 fn main() {
-    let mut a = VariableTensor{ values: vec![parameter!(1), parameter!(2), parameter!(3)]};
-    let mut b = VariableTensor{ values: vec![parameter!(4), parameter!(5), parameter!(6)]};
-    let mut add_node = &mut a * &mut b;
-    let mut output_values = Vec::new();
-    for val in add_node.values.drain(..) {
-        output_values.push(eval(val));
+    let mut i = 0;
+    let n = 1_000_000;
+    loop {
+        let mut a = VariableTensor::new(vec![10.0; n], true);
+        let mut b = VariableTensor::new(vec![100.0; n], true);
+        let mut c = VariableTensor::new(vec![27.0; n], true);
+        // let mut d = VariableTensor::new(vec![93.0; n], true);
+
+        // let out = (&mut a * &mut b + &mut c + &mut d).eval();
+        let out = (&mut a + &mut b + &mut c).eval();
+        println!("Iteration {}", i);
+        i += 1;
     }
-    println!("{:?}", output_values);
-    println!("{:?}", a);
-    println!("{:?}", b);
 }
