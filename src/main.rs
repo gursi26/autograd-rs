@@ -22,10 +22,9 @@ fn main() {
         let mut a = VariableTensor::new(vec![10.0; n], true);
         let mut b = VariableTensor::new(vec![100.0; n], true);
         let mut c = VariableTensor::new(vec![27.0; n], true);
-        // let mut d = VariableTensor::new(vec![93.0; n], true);
+        let mut d = VariableTensor::new(vec![93.0; n], true);
 
-        // let out = (&mut a * &mut b + &mut c + &mut d).eval();
-        let out = (&mut a + &mut b + &mut c).eval();
+        let out = (&mut a * &mut b + &mut c + &mut d).eval();
         println!("Iteration {}", i);
         i += 1;
     }
