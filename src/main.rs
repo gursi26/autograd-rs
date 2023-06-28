@@ -2,30 +2,30 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-mod variable;
-mod graph;
-mod ops;
 mod compute;
+mod graph;
+mod nn;
+mod ops;
+mod variable;
 mod variable_wrapper;
-mod tensor;
-mod tensor_wrapper;
 
-use variable::Variable;
-use tensor::*;
+use compute::matmul;
+use nn::*;
+use rand::prelude::*;
+use rand_distr::{Distribution, Normal};
+use rayon::prelude::*;
+use std::collections::HashMap;
 use variable_wrapper::*;
-use rayon;
 
 fn main() {
-    let mut i = 0;
-    let n = 1_000_000;
-    loop {
-        let mut a = VariableTensor::new(vec![10.0; n], true);
-        let mut b = VariableTensor::new(vec![100.0; n], true);
-        let mut c = VariableTensor::new(vec![27.0; n], true);
-        let mut d = VariableTensor::new(vec![93.0; n], true);
-
-        let out = (&mut a * &mut b + &mut c + &mut d).eval();
-        println!("Iteration {}", i);
-        i += 1;
+    let layer = Layer::linear(100, 200);
+    let mut x = Vec::new();
+    for _ in 0..100 {
+        x.push(add(1.0, 0.0))
+    }
+    if let Layer::Linear(mut w, b) = layer {
+        let out = matmul(&mut w, x);
+        let out: Vec<Variable> = out.into_iter().map(|n| eval(n)).collect();
+        println!("{:?}", out);
     }
 }

@@ -1,9 +1,13 @@
 #[derive(Debug, Clone)]
 pub enum UnaryOp {
-    Negate, Exp, Reciprocal
+    Negate,
+    Exp,
+    Reciprocal,
 }
 
 #[derive(Debug, Clone)]
 pub enum BinaryOp {
-    Add, Multiply, Pow
+    Add,
+    Multiply,
+    Pow,
 }

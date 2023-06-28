@@ -2,7 +2,7 @@
 pub struct Variable {
     pub value: f64,
     pub requires_grad: bool,
-    pub grad: Option<f64>
+    pub grad: Option<f64>,
 }
 
 impl Default for Variable {
@@ -10,40 +10,52 @@ impl Default for Variable {
         Variable {
             value: 0.0,
             requires_grad: false,
-            grad: None
+            grad: None,
         }
     }
 }
 
 impl std::fmt::Display for Variable {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{{{ }, requires_grad = { }}}", self.value, self.requires_grad)
+        write!(
+            f,
+            "{{{ }, requires_grad = { }}}",
+            self.value, self.requires_grad
+        )
     }
 }
 
 impl Variable {
     pub fn new(value: f64) -> Variable {
-        Variable { value, requires_grad: false, ..Default::default()}
+        Variable {
+            value,
+            requires_grad: false,
+            ..Default::default()
+        }
     }
 
     pub fn parameter(value: f64) -> Variable {
-        Variable { value , requires_grad: true, ..Default::default()}
+        Variable {
+            value,
+            requires_grad: true,
+            ..Default::default()
+        }
     }
 }
 
 #[macro_export]
 macro_rules! var {
-    ($a:expr)=> {{
+    ($a:expr) => {{
         Variable::new($a as f64)
-    }}
+    }};
 }
 
 #[macro_export]
 macro_rules! parameter {
-    ($a:expr)=> {{
+    ($a:expr) => {{
         Variable::parameter($a as f64)
-    }}
+    }};
 }
 
-pub use var;
 pub use parameter;
+pub use var;
